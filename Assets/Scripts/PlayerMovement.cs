@@ -256,8 +256,6 @@ public class PlayerMovement : MonoBehaviour
         lastJumpTime = 0;
         isJumping = true;
         jumpInputReleased = false;
-
-        Debug.Log("Wall Jump: Facing Right - " + isFacingRight + " Force - " + jumpForceX + ", " + jumpForceY);
     }
 
     public void OnJump()
@@ -314,7 +312,7 @@ public class PlayerMovement : MonoBehaviour
         transform.localScale = scale;
     }
 
-    private void OnDrawGizmosSelected()
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(groundCheckPoint.position, groundCheckSize);
