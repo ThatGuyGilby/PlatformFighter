@@ -5,14 +5,17 @@ using UnityEngine;
 public abstract class CharacterStats : MonoBehaviour
 {
     public float currentHealth;
-    public Stat health;
-    public Stat damage;
+    public Stat health, damage;
 
     public void Start()
     {
         currentHealth = health.GetValue();
     }
 
+    /// <summary>
+    /// Take the desired amoount of damage.
+    /// </summary>
+    /// <param name="_damage">The amount of damage to be taken.</param>
     public void TakeDamage(float _damage)
     {
         currentHealth -= _damage;
@@ -23,6 +26,9 @@ public abstract class CharacterStats : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Cause the character to die.
+    /// </summary>
     public virtual void Die()
     {
         Debug.Log($"{gameObject.name} died.");

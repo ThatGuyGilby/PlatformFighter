@@ -3,109 +3,144 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(PlayerCore))]
 public class PlayerCombat : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private PlayerCore playerCore;
 
-    public WeaponType weaponType = WeaponType.Melee;
+    [Header("Combat")]
+    [SerializeField] private WeaponType weaponType = WeaponType.MELEE;
 
     [Header("Melee")]
-    public Transform attackPoint;
-    public float attackRange;
-    public LayerMask enemyLayers;
+    [SerializeField] private MeleeWeapon meleeWeapon;
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private LayerMask enemyLayers;
 
     [Header("Ranged")]
-    public Transform gunBarrel;
-    public float gunRange;
-    public GameObject projectilePrefab;
+    [SerializeField] private RangedWeapon rangedWeapon;
+    [SerializeField] private Transform gunBarrel;
 
-    [Header("Dash")]
-    public float dashForce;
+    [Header("Stomper")]
+    [SerializeField] private Vector2 stomperRange;
+    [SerializeField] private Vector2 stomperOffset;
+    [SerializeField] private float stompBounceForce;
+    [SerializeField] private bool stompBounce;
+    [SerializeField] private bool canStomp = false;
+    [SerializeField] private float timeBetweenStomps;
+    private float lastStompTime;
 
-    private CharacterStats stats;
-    private PlayerMovement playerMovement;
-    private Rigidbody2D rb;
-
-    private void Start()
+    private void Update()
     {
-        stats = GetComponent<CharacterStats>();
-        playerMovement = GetComponent<PlayerMovement>();
-        rb = GetComponent<Rigidbody2D>();
+        // If stomping is enabled and the player stomp cooldown has expired check for targets.
+        if (canStomp && lastStompTime <= 0)
+        {
+            // Use a physics overlap box to check if there are any enemies that are within the stomp hitbox.
+            Collider2D[] _stompedEnemies = Physics2D.OverlapBoxAll(GetCenter(transform.position, stomperOffset), stomperRange, 0, enemyLayers);
+
+            // If an enemy was hit apply the bounce force to the player and put the stomp on cooldown.
+            if (_stompedEnemies.Length > 0 && stompBounce)
+            {
+                playerCore.rigidbody2D.AddForce(Vector2.up * stompBounceForce, ForceMode2D.Impulse);
+                lastStompTime = timeBetweenStomps;
+
+                // Loop through the enemies that were found and damage them.
+                foreach (Collider2D _enemy in _stompedEnemies)
+                {
+                    if (_enemy.transform.position.y < transform.position.y)
+                    {
+                        _enemy.GetComponent<CharacterStats>().TakeDamage(playerCore.playerStats.damage.GetValue());
+                    }
+                }
+            }
+        }
+
+        #region Timer
+        lastStompTime -= Time.deltaTime;
+        #endregion
     }
 
     #region Inputs
     public void Attack(InputAction.CallbackContext _context)
     {
+        // If the attack input was pressed down attack based on the weapon type.
         if (_context.started)
         {
             switch(weaponType)
             {
-                case WeaponType.Melee:
-                    // Detect enemies
-                    Collider2D[] _hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayers);
+                case WeaponType.MELEE:
+                    if (meleeWeapon == null) return;
 
-                    // If an enemy was hit dash towards them.
+                    // Use a physics overlap box to check if there are any enemies that are within the attack hitbox.
+                    Collider2D[] _hitEnemies = Physics2D.OverlapBoxAll(GetCenter(attackPoint.position, meleeWeapon.attackOffset), meleeWeapon.attackRange, 0, enemyLayers);
+                    
                     if (_hitEnemies.Length > 0)
                     {
-                        Dash();
+                        // If an enemy was hit and the current melee weapon has dash attacks enabled dash towards the hit enemy.
+                        if (meleeWeapon.dashAttack)
+                        {
+                            playerCore.playerMovement.Dash(meleeWeapon.dashForce, meleeWeapon.bypassCanDash);
+                        }
+
+                        // Loop through the enemies that were found and damage them.
+                        foreach (Collider2D _enemy in _hitEnemies)
+                        {
+                            _enemy.GetComponent<CharacterStats>().TakeDamage(playerCore.playerStats.damage.GetValue());
+                        }
                     }
 
-                    // Damage enemies
-                    foreach (Collider2D _enemy in _hitEnemies)
-                    {
-                        _enemy.GetComponent<CharacterStats>().TakeDamage(stats.damage.GetValue());
-                    }
                     break;
-                case WeaponType.Ranged:
+                case WeaponType.RANGED:
                     break;
             }
         }
     }
+    #endregion
 
-    public void Dash(InputAction.CallbackContext _context)
+    /// <summary>
+    /// Get the center of the player acounting for the given offset.
+    /// </summary>
+    /// <param name="_center">The original center point.</param>
+    /// <param name="_offset">The desired offset.</param>
+    /// <returns></returns>
+    private Vector3 GetCenter(Vector3 _center, Vector3 _offset)
     {
-        if (_context.started)
+        if (playerCore.playerMovement.isFacingRight)
         {
-            Dash();
+            _center += new Vector3(_offset.x, _offset.y, _offset.z);
         }
+        else
+        {
+            _center += new Vector3(-_offset.x, _offset.y, -_offset.z);
+        }
+
+        return _center;
     }
-    #endregion
 
-    #region Dash
-    private void Dash()
+    private void OnDrawGizmosSelected()
     {
-        // Get the direction to dash in
-        Vector3 pos = transform.position;
-        Vector3 dir = (gunBarrel.position - transform.position).normalized;
+        Gizmos.color = Color.magenta;
 
-        // Add the dash force
-        rb.AddForce(dir * dashForce, ForceMode2D.Impulse);
-    }
-    #endregion
-
-    private void OnDrawGizmos()
-    {
+        // Draw the current weapon's hitbox if all of the references are correctly linked.
         switch (weaponType)
         {
-            case WeaponType.Melee:
-                if (attackPoint == null) return;
-
-                Gizmos.color = Color.green;
-                Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+            case WeaponType.MELEE:
+                if (attackPoint == null || meleeWeapon == null) return;
+                
+                Gizmos.DrawWireCube(GetCenter(attackPoint.position, meleeWeapon.attackOffset), meleeWeapon.attackRange);
                 break;
-            case WeaponType.Ranged:
-                if (gunBarrel == null) return;
-
-                Gizmos.color = Color.green;
-                Vector3 pos = transform.position;
-                Vector3 dir = (gunBarrel.position - transform.position);
-                Gizmos.DrawLine(gunBarrel.position, gunBarrel.position + dir * gunRange);
+            case WeaponType.RANGED:
+                if (gunBarrel == null || rangedWeapon == null) return;
+                
+                Vector3 _dir = (gunBarrel.position - transform.position);
+                Gizmos.DrawLine(gunBarrel.position, gunBarrel.position + _dir * rangedWeapon.gunRange);
                 break;
         }
+        
+        // If the player can stomp draw the stomp hitbox.
+        if (canStomp)
+        {
+            Gizmos.DrawWireCube(GetCenter(transform.position, stomperOffset), stomperRange);
+        }
     }
-}
-
-public enum WeaponType
-{
-    Melee,
-    Ranged
 }

@@ -133,8 +133,9 @@ GameObject:
   - component: {fileID: 2008076816338465658}
   - component: {fileID: 2008076816338465657}
   - component: {fileID: 2008076816338465656}
-  - component: {fileID: 7949346146897959556}
   - component: {fileID: 819746094}
+  - component: {fileID: 2391624593464127618}
+  - component: {fileID: 7949346146897959556}
   - component: {fileID: 819746096}
   - component: {fileID: 6084705475279532957}
   m_Layer: 0
@@ -225,46 +226,6 @@ Rigidbody2D:
   m_SleepingMode: 0
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!114 &7949346146897959556
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2008076816338465653}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b50739bc734147d44a6eea0109ebc28b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 9
-  acceleration: 13
-  deceleration: 13
-  airAccel: 1
-  airDecel: 1
-  velPower: 0.96
-  frictionAmount: 0.95
-  canMove: 1
-  canWallJump: 0
-  canClimb: 0
-  jumpForce: 13
-  wallJumpForce: {x: -20, y: 13}
-  jumpCutMultiplier: 0.4
-  wallJumpStopRunTime: 0.1
-  fallGravityMultiplier: 2
-  slideForce: 0
-  climbSpeed: 0
-  groundCheckPoint: {fileID: 2008076815856032586}
-  groundCheckSize: {x: 0.4, y: 0.1}
-  frontWallCheckPoint: {fileID: 2008076816889673182}
-  backWallCheckPoint: {fileID: 2008076817373089176}
-  wallCheckSize: {x: 0.04, y: 0.4}
-  jumpCoyoteTime: 0.15
-  jumpBufferTime: 0.1
-  wallJumpCoyoteTime: 0.15
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 64
 --- !u!114 &819746094
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -340,8 +301,8 @@ MonoBehaviour:
     m_ActionName: Player/Attack[/Keyboard/x]
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 819746096}
-        m_TargetAssemblyTypeName: PlayerCombat, Assembly-CSharp
+      - m_Target: {fileID: 7949346146897959556}
+        m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
         m_MethodName: Dash
         m_Mode: 0
         m_Arguments:
@@ -359,6 +320,66 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &2391624593464127618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2008076816338465653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7777c8c2678377748b7adb22a2803473, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerMovement: {fileID: 7949346146897959556}
+  playerStats: {fileID: 6084705475279532957}
+  playerCombat: {fileID: 819746096}
+  rigidbody2D: {fileID: 2008076816338465656}
+--- !u!114 &7949346146897959556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2008076816338465653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b50739bc734147d44a6eea0109ebc28b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerCore: {fileID: 2391624593464127618}
+  moveSpeed: 9
+  acceleration: 13
+  deceleration: 13
+  airAccel: 1
+  airDecel: 1
+  velPower: 0.96
+  frictionAmount: 0.95
+  canMove: 1
+  canWallJump: 0
+  canClimb: 0
+  canDash: 0
+  jumpForce: 13
+  wallJumpForce: {x: -20, y: 13}
+  jumpCutMultiplier: 0.4
+  wallJumpStopRunTime: 0.1
+  fallGravityMultiplier: 2
+  slideForce: 0
+  climbSpeed: 0
+  dashForce: 25
+  groundCheckPoint: {fileID: 2008076815856032586}
+  groundCheckSize: {x: 0.4, y: 0.1}
+  frontWallCheckPoint: {fileID: 2008076816889673182}
+  backWallCheckPoint: {fileID: 2008076817373089176}
+  wallCheckSize: {x: 0.04, y: 0.4}
+  jumpCoyoteTime: 0.15
+  jumpBufferTime: 0.1
+  wallJumpCoyoteTime: 0.15
+  isFacingRight: 1
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!114 &819746096
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -371,16 +392,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b9876fc4c5da9428c1227b2f76ea43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerCore: {fileID: 2391624593464127618}
   weaponType: 0
+  meleeWeapon: {fileID: 11400000, guid: c4e087320848f4e4a8469b97a0c93ce8, type: 2}
   attackPoint: {fileID: 895501804}
-  attackRange: 0.5
   enemyLayers:
     serializedVersion: 2
     m_Bits: 128
+  rangedWeapon: {fileID: 11400000, guid: d1e295637cf84be46ac6915e3686b18c, type: 2}
   gunBarrel: {fileID: 638278141}
-  gunRange: 5
-  projectilePrefab: {fileID: 0}
-  dashForce: 45
+  stomperRange: {x: 0.5, y: 0.05}
+  stomperOffset: {x: 0, y: -0.55}
+  stompBounceForce: 15
+  stompBounce: 1
+  canStomp: 1
+  timeBetweenStomps: 0.25
 --- !u!114 &6084705475279532957
 MonoBehaviour:
   m_ObjectHideFlags: 0
