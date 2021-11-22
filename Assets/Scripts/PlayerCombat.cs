@@ -11,6 +11,9 @@ public class PlayerCombat : MonoBehaviour
 
     [Header("Combat")]
     [SerializeField] private WeaponType weaponType = WeaponType.MELEE;
+    public PlayerCombatState currentState = PlayerCombatState.IDLE;
+    public List<PlayerCombatState> stateSequence = new List<PlayerCombatState>();
+    public List<Collider2D> currentAttackBlacklist = new List<Collider2D>();
 
     [Header("Melee")]
     [SerializeField] private MeleeWeapon meleeWeapon;
@@ -60,6 +63,45 @@ public class PlayerCombat : MonoBehaviour
         #endregion
     }
 
+    private void FixedUpdate()
+    {
+        if (stateSequence.Count > 0)
+        {
+            currentState = stateSequence[0];
+            stateSequence.RemoveAt(0);
+        }
+        else if (currentState != PlayerCombatState.IDLE)
+        {
+            currentState = PlayerCombatState.IDLE;
+            playerCore.playerMovement.SetCanMove(true);
+        }
+
+        switch (currentState)
+        {
+            case PlayerCombatState.ACTIVE:
+                MeleeAttack();
+                break;
+        }
+    }
+
+    private void QueueFrameData(AttackFrameData _frameData)
+    {
+        for (int i = 0; i < _frameData.startup; i++)
+        {
+            stateSequence.Add(PlayerCombatState.STARTUP);
+        }
+
+        for (int i = 0; i < _frameData.active; i++)
+        {
+            stateSequence.Add(PlayerCombatState.ACTIVE);
+        }
+
+        for (int i = 0; i < _frameData.lag; i++)
+        {
+            stateSequence.Add(PlayerCombatState.LAG);
+        }
+    }
+
     #region Inputs
     public void Attack(InputAction.CallbackContext _context)
     {
@@ -69,26 +111,12 @@ public class PlayerCombat : MonoBehaviour
             switch(weaponType)
             {
                 case WeaponType.MELEE:
-                    if (meleeWeapon == null) return;
-
-                    // Use a physics overlap box to check if there are any enemies that are within the attack hitbox.
-                    Collider2D[] _hitEnemies = Physics2D.OverlapBoxAll(GetCenter(attackPoint.position, meleeWeapon.attackOffset), meleeWeapon.attackRange, 0, enemyLayers);
-                    
-                    if (_hitEnemies.Length > 0)
-                    {
-                        // If an enemy was hit and the current melee weapon has dash attacks enabled dash towards the hit enemy.
-                        if (meleeWeapon.dashAttack)
-                        {
-                            playerCore.playerMovement.Dash(meleeWeapon.dashForce, meleeWeapon.bypassCanDash);
-                        }
-
-                        // Loop through the enemies that were found and damage them.
-                        foreach (Collider2D _enemy in _hitEnemies)
-                        {
-                            _enemy.GetComponent<CharacterStats>().TakeDamage(playerCore.playerStats.damage.GetValue());
-                        }
-                    }
-
+                    if (meleeWeapon == null || currentState != PlayerCombatState.IDLE) return;
+                    currentState = PlayerCombatState.LAG;
+                    QueueFrameData(meleeWeapon.frameData);
+                    currentAttackBlacklist = new List<Collider2D>();
+                    playerCore.playerMovement.SetCanMove(false);
+                    playerCore.playerMovement.HardStop();
                     break;
                 case WeaponType.RANGED:
                     break;
@@ -96,6 +124,34 @@ public class PlayerCombat : MonoBehaviour
         }
     }
     #endregion
+
+    private void MeleeAttack()
+    {
+        // Use a physics overlap box to check if there are any enemies that are within the attack hitbox.
+        Collider2D[] _hitEnemies = Physics2D.OverlapBoxAll(GetCenter(attackPoint.position, meleeWeapon.attackOffset), meleeWeapon.attackRange, 0, enemyLayers);
+
+        if (_hitEnemies.Length > 0)
+        {
+            bool _validCheck = false;
+
+            // Loop through the enemies that were found and damage them.
+            foreach (Collider2D _enemy in _hitEnemies)
+            {
+                if (!currentAttackBlacklist.Contains(_enemy))
+                {
+                    _enemy.GetComponent<CharacterStats>().TakeDamage(playerCore.playerStats.damage.GetValue());
+                    currentAttackBlacklist.Add(_enemy);
+                    _validCheck = true;
+                }
+            }
+
+            // If an enemy was hit and the current melee weapon has dash attacks enabled dash towards the hit enemy.
+            if (meleeWeapon.dashAttack && _validCheck)
+            {
+                playerCore.playerMovement.Dash(meleeWeapon.dashForce, meleeWeapon.bypassCanDash);
+            }
+        }
+    }
 
     /// <summary>
     /// Get the center of the player acounting for the given offset.
@@ -127,7 +183,16 @@ public class PlayerCombat : MonoBehaviour
             case WeaponType.MELEE:
                 if (attackPoint == null || meleeWeapon == null) return;
                 
-                Gizmos.DrawWireCube(GetCenter(attackPoint.position, meleeWeapon.attackOffset), meleeWeapon.attackRange);
+                if (currentState == PlayerCombatState.ACTIVE)
+                {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawCube(GetCenter(attackPoint.position, meleeWeapon.attackOffset), meleeWeapon.attackRange);
+                    Gizmos.color = Color.magenta;
+                }
+                else
+                {
+                    Gizmos.DrawWireCube(GetCenter(attackPoint.position, meleeWeapon.attackOffset), meleeWeapon.attackRange);
+                }
                 break;
             case WeaponType.RANGED:
                 if (gunBarrel == null || rangedWeapon == null) return;

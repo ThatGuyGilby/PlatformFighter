@@ -385,6 +385,16 @@ public class PlayerMovement : MonoBehaviour
         canMove = true;
     }
 
+    public void SetCanMove(bool _value)
+    {
+        canMove = _value;
+    }
+
+    public void HardStop()
+    {
+        playerCore.rigidbody2D.velocity = Vector2.zero;
+    }
+
     /// <summary>
     /// Flip the x scale.
     /// </summary>

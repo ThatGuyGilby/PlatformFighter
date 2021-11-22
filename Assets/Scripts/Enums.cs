@@ -7,3 +7,11 @@ public enum WeaponType
     MELEE,
     RANGED
 }
+
+public enum PlayerCombatState
+{
+    IDLE,
+    STARTUP,
+    ACTIVE,
+    LAG
+}

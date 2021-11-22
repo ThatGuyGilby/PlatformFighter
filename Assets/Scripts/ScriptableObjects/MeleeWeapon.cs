@@ -8,6 +8,7 @@ public class MeleeWeapon : Weapon
     [Header("Melee")]
     public Vector2 attackRange;
     public Vector2 attackOffset;
+    public AttackFrameData frameData;
     public bool dashAttack = false;
     public float dashForce;
     public bool bypassCanDash;

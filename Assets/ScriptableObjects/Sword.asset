@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: Sword
   m_EditorClassIdentifier: 
   name: Sword
-  attackRange: {x: 1, y: 0.125}
-  attackOffset: {x: 0, y: 0}
-  dashAttack: 1
-  dashForce: 55
+  attackRange: {x: 1.5, y: 0.5}
+  attackOffset: {x: 0.25, y: 0}
+  frameData:
+    startup: 3
+    active: 2
+    lag: 17
+  dashAttack: 0
+  dashForce: 10
   bypassCanDash: 1

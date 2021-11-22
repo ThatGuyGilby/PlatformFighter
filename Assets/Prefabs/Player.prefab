@@ -394,6 +394,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCore: {fileID: 2391624593464127618}
   weaponType: 0
+  currentState: 0
+  stateSequence: 
+  currentAttackBlacklist: []
   meleeWeapon: {fileID: 11400000, guid: c4e087320848f4e4a8469b97a0c93ce8, type: 2}
   attackPoint: {fileID: 895501804}
   enemyLayers:
@@ -404,8 +407,8 @@ MonoBehaviour:
   stomperRange: {x: 0.5, y: 0.05}
   stomperOffset: {x: 0, y: -0.55}
   stompBounceForce: 15
-  stompBounce: 1
-  canStomp: 1
+  stompBounce: 0
+  canStomp: 0
   timeBetweenStomps: 0.25
 --- !u!114 &6084705475279532957
 MonoBehaviour:
